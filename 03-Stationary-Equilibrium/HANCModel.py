@@ -9,7 +9,7 @@ import household_problem
 class HANCModelClass(EconModelClass,GEModelClass):    
 
     # remember in model = EconModelClass(name='') we call:
-    # self.settings()ba
+    # self.settings()
     # self.setup()
     # self.allocate()
 
@@ -28,7 +28,7 @@ class HANCModelClass(EconModelClass,GEModelClass):
         self.inputs_hh = ['r','w'] # direct inputs
         self.inputs_hh_z = [] # transition matrix inputs (not used today)
         self.outputs_hh = ['a','c','l'] # outputs
-        self.intertemps_hh = ['vbeg_a'] # intertemporal variables
+        self.intertemps_hh = ['vbeg_a'] # intertemporal variables [future marginal utility of consumption]
 
         # c. GE
         self.shocks = [] # exogenous shocks (not used today)
@@ -94,4 +94,5 @@ class HANCModelClass(EconModelClass,GEModelClass):
 
     prepare_hh_ss = steady_state.prepare_hh_ss
     find_ss = steady_state.find_ss
+
 
