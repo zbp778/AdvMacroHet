@@ -82,3 +82,19 @@ class HANCGovModelClass(EconModelClass,GEModelClass):
 
     prepare_hh_ss = steady_state.prepare_hh_ss
     find_ss = steady_state.find_ss
+
+    def v_ss(self):
+        """ social welfare in steady state """
+
+        par = self.par
+        ss = self.ss
+        
+        return np.sum([par.beta**t*ss.U_hh for t in range(par.T)])
+
+    def v_path(self):
+        """ social welfare in transition path """
+
+        par = self.par
+        path = self.path
+
+        return np.sum([par.beta**t*path.U_hh[t] for t in range(par.T)])
