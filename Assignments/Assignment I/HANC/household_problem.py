@@ -27,11 +27,11 @@ def solve_hh_backwards(par,z_trans,r,w,vbeg_a_plus,vbeg_a,a,c,l,ell,
             ## i. labor supply and Euler inversion 
             we = w*par.z_grid[i_z]*(1-tau_l) # after tax effective wage 
             muc_nextgrid = par.beta * vbeg_a_plus[i_fix,i_z]
-            c_endo = muc_nextgrid**(-1/par.sigma)
-            ell_nextgrid = (we * muc_nextgrid / par.vphi) ** par.frisch
+            c_endo = muc_nextgrid**(-1/par.sigma) # Eq. (10) in notes
+            ell_nextgrid = (we * muc_nextgrid / par.vphi) ** par.frisch # Eq. (11) in notes
 
             ## ii. cash-on-hand
-            m_endo = c_endo -  we*ell_nextgrid  + par.a_grid - transfer
+            m_endo = c_endo -  we*ell_nextgrid  + par.a_grid - transfer # Seems like sign is switched around. If cash on hand is 5 it means that household spent 5 more than they "earned".
             m =  (1+(1-tau_a)*r)*par.a_grid
 
             if ss: # initial values 
@@ -41,8 +41,8 @@ def solve_hh_backwards(par,z_trans,r,w,vbeg_a_plus,vbeg_a,a,c,l,ell,
             else:
 
                 # interpolation to fixed grid
-                interp_1d_vec(m_endo,par.a_grid,m,a[i_fix,i_z])
-                interp_1d_vec(m_endo,ell_nextgrid,m,ell[i_fix,i_z])
+                interp_1d_vec(m_endo,par.a_grid,m,a[i_fix,i_z]) # finds the value of m_endo at the points par.a_grid and stores it in a[i_fix,i_z]
+                interp_1d_vec(m_endo,ell_nextgrid,m,ell[i_fix,i_z]) # finds the value of ell_nextgrid at the points m and stores it in ell[i_fix,i_z]
             
                 # if constrained we have to solve labor supply decision again 
                 a_min = par.a_grid[0]
@@ -61,7 +61,7 @@ def solve_hh_backwards(par,z_trans,r,w,vbeg_a_plus,vbeg_a,a,c,l,ell,
 
         # b. expectation step 
         v_a = (1+(1-tau_a)*r)*c[i_fix]**(-par.sigma)
-        vbeg_a[i_fix] = z_trans[i_fix]@v_a
+        vbeg_a[i_fix] = z_trans[i_fix]@v_a #Is this expected welfate using eq. (9) in notes or should i add a variable more?
         
 
 @nb.njit 

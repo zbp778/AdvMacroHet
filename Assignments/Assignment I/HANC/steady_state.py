@@ -50,16 +50,24 @@ def obj_ss(x,model,do_print,calibrate):
 
     if calibrate: # If we calibrate the model guess on the following variables
         ## CODE HERE ##
-        ...
+        par.beta= x[0]
+        ss.transfer = x[1]
+        ss.K = x[2]
+        par.vphi = x[3]
 
-        # in calibration, set tau_l to calibrated value 
+        ss.L=1.0 # normalize labor to 1
+
+        # in calibration, set tau_l to calibrated value (what does this mean?) 
         ss.tau_l = par.tau_l_ss
 
     else: # If we solve the model guess on the following variables
         ## CODE HERE ##
-        ...
 
-
+        ss.transfer = x[0]
+        ss.K = x[1]
+        ss.tau_l = par.tau_l_ss
+        ss.L=1.0
+    
     # update tau_a value 
     ss.tau_a = par.tau_a_ss
 
@@ -71,13 +79,17 @@ def obj_ss(x,model,do_print,calibrate):
     ss.rK = par.alpha*ss.Gamma*(ss.K/ss.L)**(par.alpha-1.0)
     ss.r = ss.rK - par.delta
     ss.w = (1.0-par.alpha)*ss.Gamma*(ss.K/ss.L)**par.alpha
-
-
+    
+    print("hh")
     # c. household behavior
     prepare_hh_ss(model)
+    print("efter prepare")
     model.solve_hh_ss(do_print=do_print)
+    print(" efter hh solve")
     model.simulate_hh_ss(do_print=do_print)
+    print("efter hh simulate")
     ss.A = ss.A_hh
+    print("videre efter hh")
 
     # d. market clearing
     ss.I = par.delta*ss.K
@@ -92,12 +104,12 @@ def obj_ss(x,model,do_print,calibrate):
 
     if calibrate: # if calibrating, return calibration targets
         ## CODE HERE ##
-        ...
+        print(ss.clearing_A, ss.clearing_G, KY_res, L_HH_res)
+        return [ss.clearing_A, ss.clearing_G, KY_res, L_HH_res]
         
-    else: # if solving, return modle residuals 
-        
+    else: # if solving, return model residuals 
         ## CODE HERE ##
-        ...
+        return [ss.clearing_A, ss.clearing_L, ss.clearing_Y, ss.clearing_G]
     
 
 def find_ss(model,do_print=False,calibrate=False, x0=None):
@@ -115,12 +127,12 @@ def find_ss_direct(model,do_print=False,calibrate=False, x0=None):
     # Initial guess for root finder  
     if x0 is None:
         if calibrate:
-            x0 = ...
+            x0 = [0.975, 0.1, 1.0, 0.5] # beta, transfer, K, vphi
         else:
-            x0 = ...
-
+            x0 = [0.1,1.0] # transfer, K
+    print("her gættes der")
     sol = optimize.root(obj_ss, x0, method='hybr', args=(model,False,calibrate))
-
+    print("kommer vi videre?")
     # Final evaluation at root 
     obj_ss(sol.x,model,False,calibrate)
     assert sol.success 
