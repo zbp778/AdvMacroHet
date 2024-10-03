@@ -1,6 +1,7 @@
 import numpy as np
 import numba as nb
-from consav.linear_interp import interp_1d_vec
+from consav.linear_interp import interp_1d_vec 
+from consav.linear_interp import interp_1d 
 
 @nb.njit
 def u(c,ell, sigma, frisch, vphi):
@@ -8,7 +9,7 @@ def u(c,ell, sigma, frisch, vphi):
 
 
 @nb.njit(parallel=True)        
-def solve_hh_backwards(par,z_trans,r,w,vbeg_a_plus,vbeg_a,a,c,l,ell,
+def solve_hh_backwards(par,z_trans,r,w,vbeg_a_plus,vbeg_a,v,v_plus,a,c,l,ell,
                        tau_l,tau_a,taxes,transfer,ss=False):
     """ solve backwards with vbeg_a from previous iteration (here vbeg_a_plus) """
 
@@ -16,7 +17,6 @@ def solve_hh_backwards(par,z_trans,r,w,vbeg_a_plus,vbeg_a,a,c,l,ell,
     # r,w,tau_l,tau_a: inputs because they are in .inputs_hh
     # vbeg_a, vbeg_a_plus: input because vbeg_a is in .intertemps_hh
     # a,c,l: outputs because they are in .outputs_hh
-
     # ss = True is to get guess of vbeg_a
 
     for i_fix in nb.prange(par.Nfix): # fixed types
@@ -42,6 +42,10 @@ def solve_hh_backwards(par,z_trans,r,w,vbeg_a_plus,vbeg_a,a,c,l,ell,
 
                 # interpolation to fixed grid
                 interp_1d_vec(m_endo,par.a_grid,m,a[i_fix,i_z]) # finds the value of m_endo at the points par.a_grid and stores it in a[i_fix,i_z]
+                #print(np.shape(m_endo))
+                # print(np.shape(par.a_grid))
+                # print(np.shape(m))
+                # print(np.shape(a[i_fix,i_z]))
                 interp_1d_vec(m_endo,ell_nextgrid,m,ell[i_fix,i_z]) # finds the value of ell_nextgrid at the points m and stores it in ell[i_fix,i_z]
             
                 # if constrained we have to solve labor supply decision again 
@@ -52,17 +56,31 @@ def solve_hh_backwards(par,z_trans,r,w,vbeg_a_plus,vbeg_a,a,c,l,ell,
                         other_income = (1+(1-tau_a)*r)*par.a_grid[i_a] + transfer
                         ell[i_fix,i_z,i_a] = solve_cl(we, other_income, a_min, par.vphi, par.sigma, par.frisch)
 
-            # cash-on-hand 
-            m = (1+(1-tau_a)*r)*par.a_grid + we*l[i_fix,i_z,:] + transfer
+            # cash-on-hand
+            m = (1+(1-tau_a)*r)*par.a_grid + we*ell[i_fix,i_z,:] + transfer
 
             c[i_fix,i_z] = m - a[i_fix,i_z]
-            l[i_fix,i_z] = l[i_fix,i_z]*par.z_grid[i_z]
+            l[i_fix,i_z] = ell[i_fix,i_z]*par.z_grid[i_z]
             taxes[i_fix,i_z] = tau_a*r*par.a_grid + l[i_fix,i_z]*w*tau_l
 
-        # b. expectation step 
+            # STEP 1. Get flow utility from optimal choices of c,l
+            u_ = u(c[i_fix,i_z],ell[i_fix,i_z],par.sigma, par.frisch, par.vphi)  
+            
+            # STEP 2. Expectation of future value v_plus over z 
+            Ev_plus = np.zeros_like(v)
+            for i_z_p in range(par.Nz):
+                Ev_plus[i_fix,i_z] += z_trans[i_fix,i_z,i_z_p]*v_plus[i_fix,i_z_p]
+
+            # STEP 3. Interpolation
+            Ev_plus_int = np.zeros_like(par.a_grid)
+            interp_1d_vec(par.a_grid,Ev_plus[i_fix,i_z],a[i_fix,i_z],Ev_plus_int)
+
+            # STEP 4. Calculate lifetime utility 
+            v[i_fix,i_z] = u_ + par.beta*Ev_plus_int
+
+        # b. expectation step
         v_a = (1+(1-tau_a)*r)*c[i_fix]**(-par.sigma)
-        vbeg_a[i_fix] = z_trans[i_fix]@v_a #Is this expected welfate using eq. (9) in notes or should i add a variable more?
-        
+        vbeg_a[i_fix] = z_trans[i_fix]@v_a #Is this expected welfare using eq. (9) in notes or should i add a variable more?
 
 @nb.njit 
 def muc(c, sigma):

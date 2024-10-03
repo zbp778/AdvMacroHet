@@ -39,6 +39,7 @@ def prepare_hh_ss(model):
     ################################################
 
     ss.vbeg_a[:] = (0.05 + par.a_grid*0.1)**(-par.sigma)
+    ss.v[:]=par.a_grid*0.0
     model.set_hh_initial_guess() # calls .solve_hh_backwards() with ss=True
     
     
@@ -65,10 +66,10 @@ def obj_ss(x,model,do_print,calibrate):
 
         ss.transfer = x[0]
         ss.K = x[1]
-        ss.tau_l = par.tau_l_ss
-        ss.L=1.0
+        ss.tau_l = x[2]
+        ss.L=x[3]
     
-    # update tau_a value 
+    # update tau_a value
     ss.tau_a = par.tau_a_ss
 
     # a. production
@@ -79,17 +80,13 @@ def obj_ss(x,model,do_print,calibrate):
     ss.rK = par.alpha*ss.Gamma*(ss.K/ss.L)**(par.alpha-1.0)
     ss.r = ss.rK - par.delta
     ss.w = (1.0-par.alpha)*ss.Gamma*(ss.K/ss.L)**par.alpha
-    
-    print("hh")
+
     # c. household behavior
     prepare_hh_ss(model)
-    print("efter prepare")
+
     model.solve_hh_ss(do_print=do_print)
-    print(" efter hh solve")
     model.simulate_hh_ss(do_print=do_print)
-    print("efter hh simulate")
     ss.A = ss.A_hh
-    print("videre efter hh")
 
     # d. market clearing
     ss.I = par.delta*ss.K
@@ -101,15 +98,15 @@ def obj_ss(x,model,do_print,calibrate):
     # e. calibration targets
     KY_res = par.KY_ss_target - ss.K/ss.Y 
     L_HH_res = ss.L_hh - 1.0
+    transfer_res = par.transfer_ss_target - ss.transfer
 
     if calibrate: # if calibrating, return calibration targets
         ## CODE HERE ##
-        print(ss.clearing_A, ss.clearing_G, KY_res, L_HH_res)
         return [ss.clearing_A, ss.clearing_G, KY_res, L_HH_res]
         
-    else: # if solving, return model residuals 
+    else: # if solving, return model residuals
         ## CODE HERE ##
-        return [ss.clearing_A, ss.clearing_L, ss.clearing_Y, ss.clearing_G]
+        return [ss.clearing_A, ss.clearing_G, ss.clearing_L, transfer_res]
     
 
 def find_ss(model,do_print=False,calibrate=False, x0=None):
@@ -127,12 +124,10 @@ def find_ss_direct(model,do_print=False,calibrate=False, x0=None):
     # Initial guess for root finder  
     if x0 is None:
         if calibrate:
-            x0 = [0.975, 0.1, 1.0, 0.5] # beta, transfer, K, vphi
+            x0 = [0.91, 0.3, 5.0, 0.4] # beta, transfer, K, vphi
         else:
-            x0 = [0.1,1.0] # transfer, K
-    print("her gættes der")
+            x0 = [0.3, 5.0, 0.1, 1] # transfer, K, tau_l, L
     sol = optimize.root(obj_ss, x0, method='hybr', args=(model,False,calibrate))
-    print("kommer vi videre?")
     # Final evaluation at root 
     obj_ss(sol.x,model,False,calibrate)
     assert sol.success 
@@ -147,4 +142,3 @@ def find_ss_direct(model,do_print=False,calibrate=False, x0=None):
         print(f'Discrepancy in L = {ss.clearing_L:12.8f}') 
         print(f'Discrepancy in Y = {ss.clearing_Y:12.8f}')  
         print(f'Discrepancy in G = {ss.clearing_G:12.8f}')  
-

@@ -20,13 +20,13 @@ class HANCModelClass(EconModelClass,GEModelClass):
         self.pols_hh = ['a'] # policy functions
         self.inputs_hh = ['r','w', 'tau_l','tau_a', 'transfer'] # direct inputs
         self.inputs_hh_z = [] # transition matrix inputs
-        self.outputs_hh = ['a','c','ell', 'l', 'taxes'] # outputs
-        self.intertemps_hh = ['vbeg_a'] # intertemporal variables
+        self.outputs_hh = ['a','c','ell', 'l', 'taxes','v'] # outputs
+        self.intertemps_hh = ['vbeg_a','v'] # intertemporal variables
 
         # c. GE
-        self.shocks = [] # exogenous shocks
+        self.shocks = ['tau_a'] # exogenous shocks
         self.unknowns = [] # endogenous unknowns
-        self.targets = [] # targets = 0
+        self.targets = ['clearing_G','clearing_L','clearing_'] # targets = 0
         self.blocks = [ # list of strings to block-functions
             'blocks.production_firm',
             'blocks.mutual_fund',
@@ -48,8 +48,8 @@ class HANCModelClass(EconModelClass,GEModelClass):
         # a. preferences
         par.frisch = 1.0 # CRRA coefficient
         par.sigma = 2.0 # CRRA coefficient
-        par.beta = np.nan # discount factor 
-        par.vphi = np.nan # disutility of labor supply 
+        par.beta = 0.9298504045748232 # discount factor 
+        par.vphi = 0.3526623957818886 # disutility of labor supply 
 
         # b. income parameters
         par.rho_z = 0.96 # AR(1) parameter
@@ -61,6 +61,7 @@ class HANCModelClass(EconModelClass,GEModelClass):
 
         # d. calibration
         par.KY_ss_target = 3. # Target K/Y ratio in ss 
+        par.transfer_ss_target = 0.3710682295043818
 
         # f. grids         
         par.a_min = 0. 
