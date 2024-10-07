@@ -59,18 +59,19 @@ def obj_ss(x,model,do_print,calibrate):
         ss.L=1.0 # normalize labor to 1
 
         # in calibration, set tau_l to calibrated value (what does this mean?) 
-        ss.tau_l = par.tau_l_ss
+        ss.tau_l = par.tau_l
 
     else: # If we solve the model guess on the following variables
         ## CODE HERE ##
 
-        ss.transfer = x[0]
-        ss.K = x[1]
-        ss.tau_l = x[2]
-        ss.L=x[3]
+        #ss.transfer = x[0]
+        ss.K = x[0]
+        ss.tau_l = x[1]
+        ss.L=x[2]
+        ss.transfer = par.transfer_ss_target
     
     # update tau_a value
-    ss.tau_a = par.tau_a_ss
+    ss.tau_a = par.tau_a
 
     # a. production
     ss.Gamma = 1.0 # normalize TFP to 1 
@@ -98,7 +99,7 @@ def obj_ss(x,model,do_print,calibrate):
     # e. calibration targets
     KY_res = par.KY_ss_target - ss.K/ss.Y 
     L_HH_res = ss.L_hh - 1.0
-    transfer_res = par.transfer_ss_target - ss.transfer
+    #transfer_res = par.transfer_ss_target - ss.transfer
 
     if calibrate: # if calibrating, return calibration targets
         ## CODE HERE ##
@@ -106,7 +107,7 @@ def obj_ss(x,model,do_print,calibrate):
         
     else: # if solving, return model residuals
         ## CODE HERE ##
-        return [ss.clearing_A, ss.clearing_G, ss.clearing_L, transfer_res]
+        return [ss.clearing_A, ss.clearing_G, ss.clearing_L]
     
 
 def find_ss(model,do_print=False,calibrate=False, x0=None):
@@ -126,7 +127,7 @@ def find_ss_direct(model,do_print=False,calibrate=False, x0=None):
         if calibrate:
             x0 = [0.91, 0.3, 5.0, 0.4] # beta, transfer, K, vphi
         else:
-            x0 = [0.3, 5.0, 0.1, 1] # transfer, K, tau_l, L
+            x0 = [5.0, 0.1, 1] # transfer, K, tau_l, L
     sol = optimize.root(obj_ss, x0, method='hybr', args=(model,False,calibrate))
     # Final evaluation at root 
     obj_ss(sol.x,model,False,calibrate)

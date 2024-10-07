@@ -24,9 +24,9 @@ class HANCModelClass(EconModelClass,GEModelClass):
         self.intertemps_hh = ['vbeg_a','v'] # intertemporal variables
 
         # c. GE
-        self.shocks = ['tau_a'] # exogenous shocks
-        self.unknowns = [] # endogenous unknowns
-        self.targets = ['clearing_G','clearing_L','clearing_'] # targets = 0
+        self.shocks = ['tau_a','Gamma'] # exogenous shocks
+        self.unknowns = ['K','L','tau_l'] # endogenous unknowns
+        self.targets = ['clearing_A','clearing_L','clearing_G'] # targets = 0
         self.blocks = [ # list of strings to block-functions
             'blocks.production_firm',
             'blocks.mutual_fund',
@@ -74,8 +74,8 @@ class HANCModelClass(EconModelClass,GEModelClass):
         par.std_Gamma = 0.01 # std. of innovation
 
         # h. government 
-        par.tau_l_ss = 0.3 # tax on labor income 
-        par.tau_a_ss = 0.1 # tax on capital income 
+        par.tau_l = 0.3 # tax on labor income 
+        par.tau_a = 0.1 # tax on capital income
 
         # i. misc.
         par.T = 1000 # length of transition path        

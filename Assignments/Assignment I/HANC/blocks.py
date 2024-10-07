@@ -3,7 +3,6 @@ import numba as nb
 
 from GEModelTools import lag, lead
 
-
 @nb.njit # required decorator for numba
 def production_firm(par,ini,ss,Gamma,K,L,rK,w,Y):
 
@@ -31,7 +30,7 @@ def mutual_fund(par,ini,ss,K,rK,A,r):
 
 @nb.njit
 def market_clearing(par,ini,ss,
-                    A,A_hh,L,L_hh,K,Y,C_hh,TAXES_hh, # inputs
+                    A,A_hh,L,L_hh,K,Y,C_hh,TAXES_hh, tau_a, tau_l, # inputs
                     I,clearing_A,clearing_L,clearing_Y, transfer, clearing_G # outputs
                     ):
 
